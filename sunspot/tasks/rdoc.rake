@@ -8,7 +8,7 @@ rescue LoadError
 end
 
 Rake::RDocTask.new(:doc) do |rdoc|
-  version = "1.0.3"#Sunspot::VERSION
+  version = Sunspot::VERSION
   rdoc.title = "Sunspot #{version} - Solr-powered search for Ruby objects - API Documentation"
   rdoc.main = 'README.rdoc'
   rdoc.rdoc_files.include('README.rdoc', 'lib/sunspot.rb', 'lib/sunspot/**/*.rb')
