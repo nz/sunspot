@@ -98,7 +98,25 @@ module Sunspot
     end
 
     def add_documents(documents)
-      @connection.add(documents)
+      documents_arr = Util.Array(documents)
+      docs_attach = []
+      docs_no_attach = []
+      documents_arr.each do |document|
+        if document.contains_attachment?
+          docs_attach << document
+        else
+          docs_no_attach << document
+        end
+      end
+
+      unless docs_no_attach.empty?
+        @connection.add(docs_no_attach)
+      else
+
+        Util.Array(docs_attach).each do |document|
+          document.add(@connection)
+        end
+      end
     end
 
     # 
@@ -107,7 +125,7 @@ module Sunspot
     # pairs.
     #
     def document_for(model)
-      RSolr::Message::Document.new(
+      Sunspot::RichDocument.new(
         :id => Adapters::InstanceAdapter.adapt(model).index_id,
         :type => Util.superclasses_for(model.class).map { |clazz| clazz.name }
       )

@@ -123,6 +123,8 @@ module Sunspot
   # scoping, sorting, and faceting is done with attribute fields.
   #
   class AttributeField < Field #:nodoc:
+    attr_reader :default_boost
+    
     def initialize(name, type, options = {})
       super(name, type, options)
       @multiple = !!options.delete(:multiple)

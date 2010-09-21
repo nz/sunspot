@@ -99,8 +99,19 @@ module Sunspot
               end
             end
           end
+
+          if !field_names && (!fulltext_dsl || !fulltext_dsl.fields_added?)
+            unless @setup.all_attachment_fields.empty?
+              @setup.all_attachment_fields.each do |attachment_text_field|
+                unless fulltext_dsl && fulltext_dsl.exclude_fields.include?(attachment_text_field.name)
+                  fulltext_query.add_fulltext_field(attachment_text_field, attachment_text_field.default_boost)
+                end
+              end
+            end
+          end
         end
       end
+
       alias_method :keywords, :fulltext
 
       def with(*args)

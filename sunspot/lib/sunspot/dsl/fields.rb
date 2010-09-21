@@ -43,6 +43,15 @@ module Sunspot
         end
       end
 
+      # Added an attachment field, the attachment filename is passed to Solr for
+      # indexing by tiqa
+
+      def attachment(*names)
+        names.each do |name|
+          @setup.add_attachment_field_factory(name)
+        end
+      end
+
       # 
       # Specify a document-level boost. As with fields, you have the option of
       # passing an attribute name which will be called on each model, or a block

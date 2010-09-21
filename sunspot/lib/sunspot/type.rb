@@ -112,6 +112,20 @@ module Sunspot
       end
     end
 
+    class AttachmentType < AbstractType
+      def indexed_name(name) #:nodoc:
+        "#{name}_attachment"
+      end
+
+      def to_indexed(value) #:nodoc:
+        value.to_s if value
+      end
+
+      def cast(text)
+        text
+      end
+    end
+
     # 
     # The String type represents string data.
     #
