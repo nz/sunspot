@@ -13,7 +13,6 @@ module Sunspot
 
       def initialize(field, lat, lng, options)
         @field, @options = field, options
-        @lat, @lng = lat, lng
         @geohash = GeoHash.encode(lat.to_f, lng.to_f, MAX_PRECISION)
       end
 
@@ -29,20 +28,21 @@ module Sunspot
 
       def to_boolean_query
         queries = []
-        boosted_geohashes = {}
         geohashes = {}
 
         # generate decreasingly-precise geohashes, with adjacent neighbors
         MAX_PRECISION.downto(precision) do |i|
-          geohashes[i] = @geohash[0, i]
+          geohashes[i] = [@geohash[0, i]]
           geohashes[i - 0.5] = GeoHash.neighbors(@geohash[0, i])
         end
         
         # turn our geohashes into boosted query clauses
-        geohashes.each do |p, geohash|
-          star = p == MAX_PRECISION ? '' : '*'
-          pb = precision_boost(boost, precision_factor, p)
-          queries << "#{@field.indexed_name}:#{geohash}#{star}^#{pb}"
+        geohashes.keys.each do |p|
+          geohashes[p].each do |geohash|
+            star = p == MAX_PRECISION ? '' : '*'
+            pb = precision_boost(boost, precision_factor, p)
+            queries << "#{@field.indexed_name}:#{geohash}#{star}^#{pb}"
+          end
         end
 
         queries.join(' OR ')
@@ -70,10 +70,25 @@ end
 
 if __FILE__ == $0
   require 'spec'
+  require File.join(File.dirname(__FILE__), "../../sunspot.rb")
 
   describe "geo queries" do
     
+    before(:all) do
+      @mock_field = mock(
+        "test location field",
+        :indexed_name => "test_location_s"
+      )
+    end
     
+    it "should include neighbors in its boolean subquery" do
+      geo_query = Sunspot::Query::Geo.new(
+        @mock_field,
+        32.7153292, -117.1572551,
+        :precision => 3
+      )
+      geo_query.to_subquery.scan(/test_location_s/).length.should == 90
+    end
     
   end
   
