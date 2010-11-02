@@ -9,7 +9,7 @@ module Sunspot
     class Geo
       MAX_PRECISION = 12
       NEIGHBOR_PRECISION = 7 # don't include neighbors above this precision
-      DEFAULT_PRECISION = 7
+      DEFAULT_PRECISION = 2
       DEFAULT_PRECISION_FACTOR = 16.0
 
       def initialize(field, lat, lng, options)
@@ -34,9 +34,9 @@ module Sunspot
         # generate decreasingly-precise geohashes, with adjacent neighbors
         MAX_PRECISION.downto(precision) do |i|
           geohashes[i] = [@geohash[0, i]]
-          if i < NEIGHBOR_PRECISION
+          if i <= NEIGHBOR_PRECISION
             neighbors = GeoHash.neighbors(@geohash[0, i + 1])
-            geohashes[i] = geohashes[i] + neighbors.reject{ |hash| hash[0, i] == @geohash[0, i] }
+            geohashes[i] = geohashes[i] + neighbors.reject{ |hash| hash[0, i] =~ %r{^@geohash[0, i]} }
           end
         end
         
@@ -89,10 +89,17 @@ if __FILE__ == $0
       geo_query = Sunspot::Query::Geo.new(
         @mock_field,
         32.7153292, -117.1572551,
-        :precision => 3
+        :precision => 2
       )
-      geo_query.to_subquery.scan(/test_location_s/).length.should == 19
+      geo_query.to_subquery.scan(/test_location_s/).length.should == 23
     end
+    
+    # TODO: capture ordering assertions to avoid egregios regressions
+    # - generate a list of sample coordinates
+    # - pre-compute their distance from a specific search point
+    # - insert the documents into Solr
+    # - perform the search
+    # - assert a correct (rough) ordering
     
   end
   
