@@ -8,6 +8,7 @@ module Sunspot
   module Query
     class Geo
       MAX_PRECISION = 12
+      NEIGHBOR_PRECISION = 7 # don't include neighbors above this precision
       DEFAULT_PRECISION = 7
       DEFAULT_PRECISION_FACTOR = 16.0
 
@@ -33,7 +34,10 @@ module Sunspot
         # generate decreasingly-precise geohashes, with adjacent neighbors
         MAX_PRECISION.downto(precision) do |i|
           geohashes[i] = [@geohash[0, i]]
-          geohashes[i - 0.5] = GeoHash.neighbors(@geohash[0, i])
+          if i < NEIGHBOR_PRECISION
+            neighbors = GeoHash.neighbors(@geohash[0, i + 1])
+            geohashes[i] = geohashes[i] + neighbors.reject{ |hash| hash[0, i] == @geohash[0, i] }
+          end
         end
         
         # turn our geohashes into boosted query clauses
@@ -87,7 +91,7 @@ if __FILE__ == $0
         32.7153292, -117.1572551,
         :precision => 3
       )
-      geo_query.to_subquery.scan(/test_location_s/).length.should == 90
+      geo_query.to_subquery.scan(/test_location_s/).length.should == 19
     end
     
   end
